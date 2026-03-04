@@ -1,0 +1,14 @@
+services:
+  rag-agent:
+    build: .
+    stdin_open: true   # input() 인터랙티브 입력 활성화
+    tty: true          # 터미널 연결 유지
+    volumes:
+      - ./docs:/app/docs                          # PDF 파일 (호스트 → 컨테이너)
+      - ./chroma_db:/app/chroma_db                # 벡터스토어 영구 저장
+      - huggingface_cache:/root/.cache/huggingface # 임베딩 모델 캐시 (재다운로드 방지)
+    env_file:
+      - .env
+
+volumes:
+  huggingface_cache:   # BAAI/bge-m3 모델 캐시 (최초 1회만 다운로드)
