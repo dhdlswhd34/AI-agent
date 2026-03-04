@@ -1,5 +1,5 @@
 from langchain_community.retrievers import BM25Retriever
-from langchain_community.retrievers.ensemble import EnsembleRetriever
+from langchain_classic.retrievers import EnsembleRetriever
 from langchain_community.vectorstores import Chroma
 from src.config import RETRIEVER_K
 
