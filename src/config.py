@@ -12,7 +12,7 @@ LLM_PROVIDER = os.getenv("LLM_PROVIDER", "claude").lower()
 
 # 모델
 MODEL_NAME = "claude-sonnet-4-6"
-GEMINI_MODEL_NAME = "gemini-2.0-flash"
+GEMINI_MODEL_NAME = "gemini-2.5-flash"
 
 # 임베딩 모델
 # BAAI/bge-m3 선택 이유:
