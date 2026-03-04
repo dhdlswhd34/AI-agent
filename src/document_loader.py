@@ -1,7 +1,7 @@
 import os
 import glob
 from langchain_community.document_loaders import PyPDFLoader
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from src.config import DOCS_DIR, CHUNK_SIZE, CHUNK_OVERLAP
 
 
