@@ -123,7 +123,12 @@ def main():
     if args.rebuild:
         chroma_dir = "./chroma_db"
         if os.path.exists(chroma_dir):
-            shutil.rmtree(chroma_dir)
+            for item in os.listdir(chroma_dir):
+                item_path = os.path.join(chroma_dir, item)
+                if os.path.isfile(item_path) or os.path.islink(item_path):
+                    os.remove(item_path)
+                elif os.path.isdir(item_path):
+                    shutil.rmtree(item_path)
             print("[재생성] 기존 벡터스토어를 삭제했습니다.")
 
     # 1. 문서 로드
