@@ -17,6 +17,8 @@ def load_documents(docs_dir: str = DOCS_DIR) -> list:
         print(f"   로드 중: {os.path.basename(pdf_path)}")
         loader = PDFPlumberLoader(pdf_path)
         docs = loader.load()
+        # PDFPlumberLoader는 텍스트 없는 페이지(이미지 등)에서 None 반환 가능
+        docs = [doc for doc in docs if doc.page_content and doc.page_content.strip()]
         documents.extend(docs)
 
     return documents
