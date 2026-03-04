@@ -4,12 +4,13 @@ import shutil
 from dotenv import load_dotenv
 from langchain_core.messages import HumanMessage, AIMessage
 
+load_dotenv()
+
 from src.document_loader import load_documents, split_documents
 from src.vectorstore import get_or_create_vectorstore
 from src.retriever import create_retriever
 from src.graph import create_agent_graph
-
-load_dotenv()
+from src.config import LLM_PROVIDER
 
 
 def parse_args():
@@ -24,10 +25,16 @@ def parse_args():
 
 def check_env():
     """환경 변수 및 문서 폴더 확인"""
-    if not os.getenv("ANTHROPIC_API_KEY"):
-        print("[오류] ANTHROPIC_API_KEY가 설정되지 않았습니다.")
-        print("       .env 파일에 ANTHROPIC_API_KEY를 설정해주세요.")
-        return False
+    if LLM_PROVIDER == "gemini":
+        if not os.getenv("GOOGLE_API_KEY"):
+            print("[오류] GOOGLE_API_KEY가 설정되지 않았습니다.")
+            print("       .env 파일에 GOOGLE_API_KEY를 설정해주세요.")
+            return False
+    else:
+        if not os.getenv("ANTHROPIC_API_KEY"):
+            print("[오류] ANTHROPIC_API_KEY가 설정되지 않았습니다.")
+            print("       .env 파일에 ANTHROPIC_API_KEY를 설정해주세요.")
+            return False
 
     docs_dir = "./docs"
     if not os.path.exists(docs_dir):
@@ -39,9 +46,10 @@ def check_env():
 
 
 def print_banner():
+    model_label = "Gemini 2.0 Flash" if LLM_PROVIDER == "gemini" else "Claude claude-sonnet-4-6"
     print("=" * 60)
     print("       PDF 문서 참조 AI 에이전트")
-    print("       LangChain + LangGraph + Claude claude-sonnet-4-6")
+    print(f"       LangChain + LangGraph + {model_label}")
     print("=" * 60)
 
 

@@ -5,9 +5,14 @@ load_dotenv()
 
 # API
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
+GOOGLE_API_KEY = os.getenv("GOOGLE_API_KEY")
+
+# LLM 프로바이더
+LLM_PROVIDER = os.getenv("LLM_PROVIDER", "claude").lower()
 
 # 모델
 MODEL_NAME = "claude-sonnet-4-6"
+GEMINI_MODEL_NAME = "gemini-2.0-flash"
 
 # 임베딩 모델
 # BAAI/bge-m3 선택 이유:

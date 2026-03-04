@@ -1,10 +1,11 @@
 from typing import TypedDict, List
 from langchain_core.messages import BaseMessage
 from langchain_anthropic import ChatAnthropic
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.graph import StateGraph, END
 
 from src.prompts import RAG_PROMPT, GRADE_PROMPT, REWRITE_PROMPT
-from src.config import MODEL_NAME, MAX_RETRIES
+from src.config import MODEL_NAME, MAX_RETRIES, LLM_PROVIDER, GOOGLE_API_KEY, GEMINI_MODEL_NAME
 
 
 class GraphState(TypedDict):
@@ -32,12 +33,10 @@ def create_agent_graph(retriever):
                                           retrieve (반복)
     """
 
-    # Claude claude-sonnet-4-6 선택 이유:
-    #   - 20만 토큰 컨텍스트로 긴 PDF 처리에 최적
-    #   - 문서 이해 및 정보 추출 능력 우수
-    #   - 한국어 처리 품질 높음
-    #   - Hallucination 억제 능력 뛰어남
-    llm = ChatAnthropic(model=MODEL_NAME, temperature=0)
+    if LLM_PROVIDER == "gemini":
+        llm = ChatGoogleGenerativeAI(model=GEMINI_MODEL_NAME, temperature=0, google_api_key=GOOGLE_API_KEY)
+    else:
+        llm = ChatAnthropic(model=MODEL_NAME, temperature=0)
 
     # -------------------------------------------------------------------------
     # 노드 정의
