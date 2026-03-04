@@ -1,6 +1,6 @@
 import os
 import glob
-from langchain_community.document_loaders import PyPDFLoader
+from langchain_community.document_loaders import PDFPlumberLoader
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from src.config import DOCS_DIR, CHUNK_SIZE, CHUNK_OVERLAP
 
@@ -15,7 +15,7 @@ def load_documents(docs_dir: str = DOCS_DIR) -> list:
     documents = []
     for pdf_path in pdf_files:
         print(f"   로드 중: {os.path.basename(pdf_path)}")
-        loader = PyPDFLoader(pdf_path)
+        loader = PDFPlumberLoader(pdf_path)
         docs = loader.load()
         documents.extend(docs)
 

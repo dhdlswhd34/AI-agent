@@ -23,7 +23,7 @@ LangChain + LangGraph를 활용한 Adaptive RAG 기반 PDF 문서 참조 챗봇
      [Rewrite] 쿼리 최적화 → 재검색          │
                                              ▼
                                        [Generate]
-                                   Claude로 답변 생성
+                                   LLM으로 답변 생성
                                    (출처 + 근거 포함)
                                              │
                                              ▼
@@ -40,22 +40,33 @@ LangChain + LangGraph를 활용한 Adaptive RAG 기반 PDF 문서 참조 챗봇
 |------|------|
 | **생태계** | LangChain, LangGraph의 공식 지원 언어로 가장 풍부한 통합 제공 |
 | **AI/ML 표준** | Hugging Face, PyTorch 등 AI 생태계의 사실상 표준 언어 |
-| **문서 처리** | pypdf, pdfplumber 등 PDF 처리 라이브러리가 가장 성숙 |
+| **문서 처리** | pdfplumber 등 PDF 처리 라이브러리가 가장 성숙 |
 | **개발 속도** | 빠른 프로토타이핑과 간결한 코드로 RAG 파이프라인 구현에 최적 |
 
 ---
 
-### LLM: Claude claude-sonnet-4-6 (Anthropic)
+### LLM: Claude Sonnet 4.6 (Anthropic) / Gemini 2.5 Flash (Google)
+
+기본값은 Claude Sonnet 4.6이며, `.env`의 `LLM_PROVIDER` 설정으로 Gemini 2.5 Flash로 전환 가능합니다.
+
+#### Claude Sonnet 4.6
 
 | 항목 | 내용 |
 |------|------|
 | **컨텍스트 윈도우** | **200,000 토큰** — 긴 PDF 문서의 전체 내용 처리 가능 |
 | **문서 이해력** | 복잡한 PDF 구조와 전문 용어 해석 능력이 타 모델 대비 우수 |
 | **Hallucination 억제** | 문서 기반 답변 시 근거 없는 정보 생성 억제 능력이 뛰어남 |
-| **Tool Use** | LangGraph 노드 간 도구 호출 지원이 안정적 |
 | **한국어 지원** | 한국어 문서 처리 및 답변 생성의 품질이 높음 |
 
-> GPT-4o 대비 문서 이해·한국어 처리에서 우수, Gemini 1.5 Pro 대비 Hallucination 억제가 강함
+#### Gemini 2.5 Flash
+
+| 항목 | 내용 |
+|------|------|
+| **속도** | 응답 속도가 빠르고 비용 효율적 |
+| **멀티모달** | 이미지·표 포함 PDF 처리에 유리 |
+| **무료 티어** | Google AI Studio 무료 할당량 제공 |
+
+> Claude는 문서 이해·한국어 처리 품질, Gemini는 속도·비용 효율 면에서 각각 강점
 
 ---
 
@@ -82,6 +93,18 @@ LangChain + LangGraph를 활용한 Adaptive RAG 기반 PDF 문서 참조 챗봇
 | **최적화** | `normalize_embeddings=True`로 코사인 유사도 검색 최적화 |
 
 > OpenAI Embedding(유료), ko-sroberta(한국어 단일 언어) 대비 다국어 무료 모델 중 최상위 성능
+
+---
+
+### PDF 로더: PDFPlumberLoader
+
+| 항목 | 내용 |
+|------|------|
+| **표(Table) 추출** | 셀 구조를 유지하며 정확하게 추출 |
+| **레이아웃 보존** | 다단 구성, 헤더/푸터 처리가 PyPDFLoader 대비 우수 |
+| **특수문자** | 수식·특수 폰트 깨짐 최소화 |
+
+> PyPDFLoader는 표·복잡한 레이아웃에서 텍스트가 뒤섞이는 문제가 있어 PDFPlumberLoader로 교체
 
 ---
 
@@ -150,7 +173,6 @@ BM25 (키워드 기반)       Vector MMR (의미 기반)
 ## 프로젝트 구조
 
 ```
-rag-agent/
 ├── README.md              # 선정 이유 및 실행 방법
 ├── Dockerfile
 ├── docker-compose.yml
@@ -184,13 +206,20 @@ rag-agent/
 cp .env.example .env
 ```
 
-`.env` 파일을 열어 API 키를 입력합니다:
+`.env` 파일을 열어 API 키와 LLM 프로바이더를 입력합니다:
 
 ```
+# Claude 사용 시
+LLM_PROVIDER=claude
 ANTHROPIC_API_KEY=your_anthropic_api_key_here
+
+# Gemini 사용 시
+LLM_PROVIDER=gemini
+GOOGLE_API_KEY=your_google_api_key_here
 ```
 
-> Anthropic API 키는 https://console.anthropic.com 에서 발급받을 수 있습니다.
+> Anthropic API 키: https://console.anthropic.com
+> Google API 키: https://aistudio.google.com
 
 ### 2. PDF 문서 준비
 
@@ -221,7 +250,7 @@ docker-compose run --rm rag-agent python main.py --rebuild
 ```
 ========================================================
        PDF 문서 참조 AI 에이전트
-       LangChain + LangGraph + Claude claude-sonnet-4-6
+       LangChain + LangGraph + Claude Sonnet 4.6
 ========================================================
 
 [1/3] 문서 로드 중...
@@ -258,8 +287,9 @@ docker-compose run --rm rag-agent python main.py --rebuild
 | 구분 | 선택 | 이유 요약 |
 |------|------|-----------|
 | 언어 | Python 3.11 | LangChain/LangGraph 공식 지원, AI 생태계 표준 |
-| LLM | Claude claude-sonnet-4-6 | 20만 토큰, 문서 이해력, Hallucination 억제 |
+| LLM | Claude Sonnet 4.6 / Gemini 2.5 Flash | 문서 이해력·한국어 품질 / 속도·비용 효율 |
 | VectorDB | ChromaDB | 로컬, 영구 저장, LangChain 통합 안정적 |
 | 임베딩 | BAAI/bge-m3 | 다국어(한국어) 특화, 무료, 고성능 |
+| PDF 로더 | PDFPlumberLoader | 표·레이아웃 정확 추출 |
 | Retriever | Ensemble (BM25+Vector) + MMR | 키워드+의미 결합으로 Recall 극대화 |
 | 프레임워크 | LangChain + LangGraph | RAG 파이프라인 + 조건부 에이전트 흐름 |
