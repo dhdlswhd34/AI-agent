@@ -17,7 +17,7 @@ class GraphState(TypedDict):
     retries: int            # 쿼리 재작성 횟수
 
 
-def create_agent_graph(retriever):
+def create_agent_graph(retriever, max_retries: int = MAX_RETRIES):
     """
     Adaptive RAG LangGraph 에이전트를 생성합니다.
 
@@ -35,7 +35,7 @@ def create_agent_graph(retriever):
 
     if LLM_PROVIDER == "gemini":
         llm = ChatGoogleGenerativeAI(model=GEMINI_MODEL_NAME, temperature=0, google_api_key=GOOGLE_API_KEY)
-    else:
+    elif LLM_PROVIDER == "claude":
         llm = ChatAnthropic(model=MODEL_NAME, temperature=0)
 
     # -------------------------------------------------------------------------
@@ -46,8 +46,15 @@ def create_agent_graph(retriever):
         """Ensemble Retriever로 관련 문서를 검색합니다."""
         print("  [검색] 관련 문서 검색 중...")
         question = state["question"]
-        documents = retriever.invoke(question)
-        print(f"  [검색] {len(documents)}개 청크 검색 완료")
+        if not question or not question.strip():
+            print("  [검색] 빈 쿼리 - 검색 건너뜀")
+            return {"documents": []}
+        try:
+            documents = retriever.invoke(question)
+            print(f"  [검색] {len(documents)}개 청크 검색 완료")
+        except Exception as e:
+            print(f"  [검색] 검색 오류 발생: {e}")
+            documents = []
         return {"documents": documents}
 
     def grade_documents_node(state: GraphState) -> dict:
@@ -77,6 +84,8 @@ def create_agent_graph(retriever):
         rewrite_chain = REWRITE_PROMPT | llm
         result = rewrite_chain.invoke({"question": question})
         new_question = result.content.strip()
+        if not new_question:
+            new_question = question
 
         print(f"  [재작성] 원본: {question}")
         print(f"  [재작성] 변환: {new_question}")
@@ -129,8 +138,8 @@ def create_agent_graph(retriever):
         documents = state["documents"]
         retries = state.get("retries", 0)
 
-        if not documents and retries < MAX_RETRIES:
-            print(f"  [판단] 관련 문서 없음 → 쿼리 재작성 ({retries + 1}/{MAX_RETRIES})")
+        if not documents and retries < max_retries:
+            print(f"  [판단] 관련 문서 없음 → 쿼리 재작성 ({retries + 1}/{max_retries})")
             return "rewrite"
 
         return "generate"

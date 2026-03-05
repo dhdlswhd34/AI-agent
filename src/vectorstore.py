@@ -1,6 +1,5 @@
 import os
 import torch
-import numpy as np
 from transformers import AutoTokenizer, AutoModel
 from langchain_core.embeddings import Embeddings
 from langchain_community.vectorstores import Chroma
@@ -53,7 +52,10 @@ def get_embeddings() -> BGEEmbeddings:
     - 무료, 로컬 실행 가능 (API 비용 없음)
     - normalize_embeddings=True로 코사인 유사도 검색 최적화
     """
-    return BGEEmbeddings(model_name=EMBEDDING_MODEL)
+    embeddings = BGEEmbeddings(model_name=EMBEDDING_MODEL)
+    # 첫 쿼리에서 간헐적 초기화 오류를 방지하기 위해 워밍업
+    embeddings.embed_query("warmup")
+    return embeddings
 
 
 def create_vectorstore(chunks: list) -> Chroma:

@@ -10,48 +10,49 @@ from src.document_loader import load_documents, split_documents
 from src.vectorstore import get_or_create_vectorstore
 from src.retriever import create_retriever
 from src.graph import create_agent_graph
-from src.config import LLM_PROVIDER
+from src.config import (
+    LLM_PROVIDER, MODEL_NAME, GEMINI_MODEL_NAME,
+    CHUNK_SIZE, CHUNK_OVERLAP, RETRIEVER_K, MAX_RETRIES,
+)
 
 
 def parse_args():
     parser = argparse.ArgumentParser(description="PDF 문서 참조 AI 에이전트")
-    parser.add_argument(
-        "--rebuild",
-        action="store_true",
-        help="벡터스토어를 강제로 재생성합니다 (새 PDF 추가 시 사용)",
-    )
+    parser.add_argument("--rebuild", action="store_true", help="vectorDB 초기화 (새 PDF 추가 시 사용)")
+    parser.add_argument("--loader", choices=["pdfplumber", "docling"], default="pdfplumber", help="PDF 파서 선택 (기본: pdfplumber)")
+    parser.add_argument("--chunk-size", type=int, default=CHUNK_SIZE, help=f"청크 크기 (기본: {CHUNK_SIZE})")
+    parser.add_argument("--chunk-overlap", type=int, default=CHUNK_OVERLAP, help=f"청크 오버랩 (기본: {CHUNK_OVERLAP})")
+    parser.add_argument("--retriever-k", type=int, default=RETRIEVER_K, help=f"검색 문서 수 (기본: {RETRIEVER_K})")
+    parser.add_argument("--max-retries", type=int, default=MAX_RETRIES, help=f"쿼리 재작성 최대 횟수 (기본: {MAX_RETRIES})")
     return parser.parse_args()
-
 
 def check_env():
     """환경 변수 및 문서 폴더 확인"""
     if LLM_PROVIDER == "gemini":
         if not os.getenv("GOOGLE_API_KEY"):
-            print("[오류] GOOGLE_API_KEY가 설정되지 않았습니다.")
+            print("[ERROR] GOOGLE_API_KEY가 설정되지 않았습니다.")
             print("       .env 파일에 GOOGLE_API_KEY를 설정해주세요.")
             return False
     else:
         if not os.getenv("ANTHROPIC_API_KEY"):
-            print("[오류] ANTHROPIC_API_KEY가 설정되지 않았습니다.")
+            print("[ERROR] ANTHROPIC_API_KEY가 설정되지 않았습니다.")
             print("       .env 파일에 ANTHROPIC_API_KEY를 설정해주세요.")
             return False
 
     docs_dir = "./docs"
     if not os.path.exists(docs_dir):
         os.makedirs(docs_dir)
-        print(f"[안내] {docs_dir}/ 폴더를 생성했습니다. PDF 파일을 넣어주세요.")
+        print(f"[INFO] {docs_dir}/ 폴더를 생성했습니다. PDF 파일을 넣어주세요.")
         return False
 
     return True
 
-
 def print_banner():
-    model_label = "Gemini 2.0 Flash" if LLM_PROVIDER == "gemini" else "Claude claude-sonnet-4-6"
-    print("=" * 60)
-    print("       PDF 문서 참조 AI 에이전트")
-    print(f"       LangChain + LangGraph + {model_label}")
-    print("=" * 60)
-
+    model_label = GEMINI_MODEL_NAME if LLM_PROVIDER == "gemini" else MODEL_NAME
+    print("=" * 50)
+    print("  PDF 문서 참조 AI 에이전트")
+    print(f"  LangChain + LangGraph + {model_label}")
+    print("=" * 50)
 
 def run_chatbot(agent, chat_history: list):
     """CLI 챗봇 루프"""
@@ -116,10 +117,11 @@ def main():
     args = parse_args()
     print_banner()
 
+    # 환경 확인
     if not check_env():
         return
 
-    # 벡터스토어 재생성 옵션
+    # vectorDB 초기화 옵션
     if args.rebuild:
         chroma_dir = "./chroma_db"
         if os.path.exists(chroma_dir):
@@ -129,17 +131,19 @@ def main():
                     os.remove(item_path)
                 elif os.path.isdir(item_path):
                     shutil.rmtree(item_path)
-            print("[재생성] 기존 벡터스토어를 삭제했습니다.")
+            print("[REBUILD] 기존 벡터스토어를 삭제했습니다.")
+
+    print(f"   loader={args.loader} | chunk={args.chunk_size}/{args.chunk_overlap} | k={args.retriever_k} | retries={args.max_retries}")
 
     # 1. 문서 로드
     print("\n[1/3] 문서 로드 중...")
-    documents = load_documents()
+    documents = load_documents(loader=args.loader)
     if not documents:
         print("[오류] docs/ 폴더에 PDF 파일이 없습니다.")
         print("       docs/ 폴더에 참조할 PDF 파일을 넣고 다시 실행하세요.")
         return
 
-    chunks = split_documents(documents)
+    chunks = split_documents(documents, chunk_size=args.chunk_size, chunk_overlap=args.chunk_overlap)
     print(f"   완료: {len(documents)}개 문서, {len(chunks)}개 청크")
 
     # 2. 벡터스토어 초기화
@@ -149,8 +153,8 @@ def main():
 
     # 3. 에이전트 초기화
     print("\n[3/3] 에이전트 초기화 중...")
-    retriever = create_retriever(vectorstore, chunks)
-    agent = create_agent_graph(retriever)
+    retriever = create_retriever(vectorstore, chunks, k=args.retriever_k)
+    agent = create_agent_graph(retriever, max_retries=args.max_retries)
     print("   완료")
 
     # 챗봇 실행

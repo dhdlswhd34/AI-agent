@@ -4,7 +4,7 @@ from langchain_community.vectorstores import Chroma
 from src.config import RETRIEVER_K
 
 
-def create_retriever(vectorstore: Chroma, documents: list) -> EnsembleRetriever:
+def create_retriever(vectorstore: Chroma, documents: list, k: int = RETRIEVER_K) -> EnsembleRetriever:
     """
     Ensemble Retriever (BM25 + Vector MMR)를 생성합니다.
 
@@ -26,14 +26,14 @@ def create_retriever(vectorstore: Chroma, documents: list) -> EnsembleRetriever:
 
     # BM25 Retriever (키워드 기반)
     bm25_retriever = BM25Retriever.from_documents(documents)
-    bm25_retriever.k = RETRIEVER_K
+    bm25_retriever.k = k
 
     # Vector Retriever with MMR (의미 기반 + 다양성)
     vector_retriever = vectorstore.as_retriever(
         search_type="mmr",
         search_kwargs={
-            "k": RETRIEVER_K,
-            "fetch_k": RETRIEVER_K * 3,
+            "k": k,
+            "fetch_k": k * 3,
             "lambda_mult": 0.7,  # 1.0=관련성 중심, 0.0=다양성 중심
         },
     )
