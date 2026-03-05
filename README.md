@@ -8,7 +8,7 @@ LangChain + LangGraph를 활용한 Adaptive RAG 기반 PDF 문서 참조 챗봇
 
 ```mermaid
 flowchart TD
-    USER(["👤 사용자 질문"])
+    USER(["사용자 질문"])
 
     subgraph RETRIEVE["Step 1 · Retrieve"]
         direction LR
@@ -19,14 +19,14 @@ flowchart TD
         VEC --> MERGE
     end
 
-    GRADE["Step 2 · Grade\n문서 관련성 평가"]
+    GRADE["Step 2 · Grade: 문서 관련성 평가"]
 
-    REWRITE["Step 3a · Rewrite\n쿼리 재작성 후 재검색"]
+    REWRITE["Step 3a · Rewrite: 쿼리 재작성 후 재검색"]
 
-    GEN["Step 3b · Generate\nClaude Sonnet 4.6\n출처 + 근거 포함 답변 생성"]
+    GEN["Step 3b · Generate: Claude Sonnet 4.6 + 근거 포함 답변 생성"]
 
-    FAIL(["답변 불가\n관련 문서 없음"])
-    ANS(["💬 최종 답변"])
+    FAIL(["답변 불가 관련 문서 없음"])
+    ANS(["최종 답변"])
 
     USER --> RETRIEVE
     MERGE --> GRADE
