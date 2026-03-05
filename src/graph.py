@@ -1,11 +1,10 @@
 from typing import TypedDict, List
 from langchain_core.messages import BaseMessage
 from langchain_anthropic import ChatAnthropic
-from langchain_google_genai import ChatGoogleGenerativeAI
 from langgraph.graph import StateGraph, END
 
 from src.prompts import RAG_PROMPT, GRADE_PROMPT, REWRITE_PROMPT
-from src.config import MODEL_NAME, MAX_RETRIES, LLM_PROVIDER, GOOGLE_API_KEY, GEMINI_MODEL_NAME
+from src.config import MODEL_NAME, MAX_RETRIES
 
 
 class GraphState(TypedDict):
@@ -31,10 +30,7 @@ def create_agent_graph(retriever, max_retries: int = MAX_RETRIES):
     retrieve -> grade_documents -> [generate | rewrite_query] -> 반복
     """
 
-    if LLM_PROVIDER == "gemini":
-        llm = ChatGoogleGenerativeAI(model=GEMINI_MODEL_NAME, temperature=0, google_api_key=GOOGLE_API_KEY)
-    elif LLM_PROVIDER == "claude":
-        llm = ChatAnthropic(model=MODEL_NAME, temperature=0)
+    llm = ChatAnthropic(model=MODEL_NAME, temperature=0)
 
     # -------------------------------------------------------------------------
     # 노드 정의

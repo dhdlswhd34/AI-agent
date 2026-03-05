@@ -12,7 +12,7 @@ from src.vectorstore import get_or_create_vectorstore
 from src.retriever import create_retriever
 from src.graph import create_agent_graph
 from src.config import (
-    LLM_PROVIDER, MODEL_NAME, GEMINI_MODEL_NAME,
+    MODEL_NAME,
     CHUNK_SIZE, CHUNK_OVERLAP, RETRIEVER_K, MAX_RETRIES,
 )
 
@@ -20,7 +20,6 @@ from src.config import (
 def parse_args():
     parser = argparse.ArgumentParser(description="PDF 문서 참조 AI 에이전트")
     parser.add_argument("--rebuild", action="store_true", help="vectorDB 초기화 (새 PDF 추가 시 사용)")
-    parser.add_argument("--loader", choices=["pdfplumber", "docling"], default="pdfplumber", help="PDF 파서 선택 (기본: pdfplumber)")
     parser.add_argument("--chunk-size", type=int, default=CHUNK_SIZE, help=f"청크 크기 (기본: {CHUNK_SIZE})")
     parser.add_argument("--chunk-overlap", type=int, default=CHUNK_OVERLAP, help=f"청크 오버랩 (기본: {CHUNK_OVERLAP})")
     parser.add_argument("--retriever-k", type=int, default=RETRIEVER_K, help=f"검색 문서 수 (기본: {RETRIEVER_K})")
@@ -29,16 +28,10 @@ def parse_args():
 
 def check_env():
     """환경 변수 및 문서 폴더 확인"""
-    if LLM_PROVIDER == "gemini":
-        if not os.getenv("GOOGLE_API_KEY"):
-            print("[ERROR] GOOGLE_API_KEY가 설정되지 않았습니다.")
-            print("       .env 파일에 GOOGLE_API_KEY를 설정해주세요.")
-            return False
-    else:
-        if not os.getenv("ANTHROPIC_API_KEY"):
-            print("[ERROR] ANTHROPIC_API_KEY가 설정되지 않았습니다.")
-            print("       .env 파일에 ANTHROPIC_API_KEY를 설정해주세요.")
-            return False
+    if not os.getenv("ANTHROPIC_API_KEY"):
+        print("[ERROR] ANTHROPIC_API_KEY가 설정되지 않았습니다.")
+        print("       .env 파일에 ANTHROPIC_API_KEY를 설정해주세요.")
+        return False
 
     docs_dir = "./docs"
     if not os.path.exists(docs_dir):
@@ -49,10 +42,9 @@ def check_env():
     return True
 
 def print_banner():
-    model_label = GEMINI_MODEL_NAME if LLM_PROVIDER == "gemini" else MODEL_NAME
     print("=" * 50)
     print("  PDF 문서 참조 AI 에이전트")
-    print(f"  LangChain + LangGraph + {model_label}")
+    print(f"  LangChain + LangGraph + {MODEL_NAME}")
     print("=" * 50)
 
 def safe_input(prompt: str) -> str:
@@ -146,11 +138,11 @@ def main():
                     shutil.rmtree(item_path)
             print("[REBUILD] 기존 벡터스토어를 삭제했습니다.")
 
-    print(f"   loader={args.loader} | chunk={args.chunk_size}/{args.chunk_overlap} | k={args.retriever_k} | retries={args.max_retries}")
+    print(f"   chunk={args.chunk_size}/{args.chunk_overlap} | k={args.retriever_k} | retries={args.max_retries}")
 
     # 1. 문서 로드
     print("\n[1/3] 문서 로드 중...")
-    documents = load_documents(loader=args.loader)
+    documents = load_documents()
     if not documents:
         print("[오류] docs/ 폴더에 PDF 파일이 없습니다.")
         print("       docs/ 폴더에 참조할 PDF 파일을 넣고 다시 실행하세요.")
