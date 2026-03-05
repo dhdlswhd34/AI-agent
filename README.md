@@ -12,9 +12,9 @@ flowchart TD
 
     subgraph RETRIEVE["Step 1 · Retrieve"]
         direction LR
-        BM25["BM25\n키워드 검색 · 0.4"]
-        VEC["Vector MMR\n의미 기반 검색 · 0.6"]
-        MERGE(["Ensemble\n결과 통합"])
+        BM25["BM25 키워드 검색 · 0.4"]
+        VEC["Vector MMR 의미 기반 검색 · 0.6"]
+        MERGE(["Ensemble 결과 통합"])
         BM25 --> MERGE
         VEC --> MERGE
     end
@@ -46,9 +46,9 @@ flowchart TD
 
 | 항목 | 내용 |
 |------|------|
-| **생태계** | LangChain, LangGraph의 공식 지원 언어로 가장 풍부한 통합 제공 |
+| **생태계** | LangChain, LangGraph의 공식 지원 언어로 가장 많은 래퍼런스 제공 |
 | **AI/ML 표준** | Hugging Face, PyTorch 등 AI 생태계의 사실상 표준 언어 |
-| **문서 처리** | docling 등 고급 문서 처리 라이브러리와의 연동이 용이 |
+| **문서 처리** | docling 등 고급 문서 처리 라이브러리와의 안정성이 높음 |
 | **개발 속도** | 빠른 프로토타이핑과 간결한 코드로 RAG 파이프라인 구현에 최적 |
 
 ---
@@ -68,9 +68,9 @@ flowchart TD
 
 | 항목 | 내용 |
 |------|------|
-| **로컬 실행** | 별도 서버·클라우드 불필요 → 개발 환경 구성 간편 |
+| **로컬 실행** | 별도 서버, 클라우드 불필요 → 빠른 개발에 적합 |
 | **영구 저장** | `persist_directory` 지원 → PDF 재처리 없이 재사용 가능 |
-| **LangChain 통합** | LangChain과의 통합이 가장 성숙하고 안정적 |
+| **LangChain 통합** | LangChain과의 통합이 안정적 |
 | **중소규모 최적** | 수백~수천 페이지 규모 문서에 최적화된 성능 |
 
 > Pinecone(클라우드 의존, 비용 발생), FAISS(영구 저장 불편) 대비 개발~운영 균형 최적
@@ -129,8 +129,9 @@ flowchart LR
 | BM25 | 0.4 | 키워드 정확 매칭 (전문 용어, 고유명사) |
 | Vector MMR | 0.6 | 의미 기반 검색 + 중복 청크 제거 |
 
+- 가중치: 관행적인 수치, 직관전 추정(검증하며 튜닝 필요)
 - **MMR (Maximal Marginal Relevance)**: 유사한 청크 중복 제거, 다양한 관점의 컨텍스트 확보
-- `lambda_mult=0.7`: 관련성(0.7)과 다양성(0.3)의 균형
+- `lambda_mult=0.7`: 관련성(0.7)과 다양성(0.3)의 균형 -> 관련성을 우선 + 최소 다양성 경험적으로 선정 (문서 종류 마다 다르게 설정 필요)
 - 순수 벡터 검색 대비 PDF 전문 문서에서 관련 정보 검색률 향상
 
 ---
@@ -199,7 +200,7 @@ flowchart LR
 
 ### 사전 요구사항
 
-- [Docker Desktop](https://www.docker.com/products/docker-desktop/) 설치
+- docker, docker compose 필요
 
 ### 1. API 키 설정
 
