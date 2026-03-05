@@ -232,10 +232,22 @@ docker-compose run --rm rag-agent
 > 최초 실행 시 이미지 빌드 + BAAI/bge-m3 모델 다운로드(약 1.5GB)로 시간이 걸립니다.
 > 이후 실행부터는 캐시를 사용하므로 빠르게 시작됩니다.
 
-### 4. 새 PDF 추가 시 (벡터스토어 재생성)
+### 4. 실행 옵션
+
+| 옵션 | 기본값 | 설명 |
+|------|--------|------|
+| `--rebuild` | - | 벡터스토어 초기화 (새 PDF 추가 시 사용) |
+| `--chunk-size` | `1000` | 청크 크기 (토큰 수) |
+| `--chunk-overlap` | `200` | 청크 간 겹치는 토큰 수 |
+| `--retriever-k` | `3` | 검색할 문서 청크 수 |
+| `--max-retries` | `2` | 쿼리 재작성 최대 횟수 |
 
 ```bash
+# 새 PDF 추가 후 벡터스토어 재생성
 docker-compose run --rm rag-agent python main.py --rebuild
+
+# 옵션 조합 예시
+docker-compose run --rm rag-agent python main.py --chunk-size 500 --retriever-k 5
 ```
 
 ---
