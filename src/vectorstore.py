@@ -2,7 +2,7 @@ import os
 import torch
 from transformers import AutoTokenizer, AutoModel
 from langchain_core.embeddings import Embeddings
-from langchain_community.vectorstores import Chroma
+from langchain_chroma import Chroma
 from src.config import CHROMA_PERSIST_DIR, EMBEDDING_MODEL
 
 
