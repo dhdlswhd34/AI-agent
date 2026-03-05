@@ -112,16 +112,16 @@ flowchart LR
     Q(["질문"]) --> BM25 & VEC
 
     subgraph BM25_BOX["BM25 · 가중치 0.4"]
-        BM25["키워드 기반 검색\n전문 용어 · 고유명사\n정확한 매칭에 강함"]
+        BM25["키워드 기반 검색 전문 용어 · 고유명사 정확한 매칭에 강함"]
     end
 
     subgraph VEC_BOX["Vector MMR · 가중치 0.6"]
-        VEC["의미 기반 검색\n문맥 · 유사 표현\n중복 청크 제거"]
+        VEC["의미 기반 검색 문맥 · 유사 표현 중복 청크 제거"]
     end
 
     BM25 --> ENS
     VEC --> ENS
-    ENS(["Ensemble\nRecall 극대화"])
+    ENS(["Ensemble Recall 극대화"])
 ```
 
 | 구성 요소 | 가중치 | 역할 |
