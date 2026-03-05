@@ -26,8 +26,8 @@ CHROMA_PERSIST_DIR = "./chroma_db"
 DOCS_DIR = "./docs"
 
 # 청킹 설정
-CHUNK_SIZE = 500
-CHUNK_OVERLAP = 100
+CHUNK_SIZE = 1000
+CHUNK_OVERLAP = 200
 
 # 검색 설정
 RETRIEVER_K = 3

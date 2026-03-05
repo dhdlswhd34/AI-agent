@@ -28,9 +28,7 @@ def create_agent_graph(retriever, max_retries: int = MAX_RETRIES):
     - 재시도 제한(MAX_RETRIES)으로 무한 루프 방지
 
     그래프 흐름:
-    retrieve → grade_documents → [generate | rewrite_query]
-                                              ↓
-                                          retrieve (반복)
+    retrieve -> grade_documents -> [generate | rewrite_query] -> 반복
     """
 
     if LLM_PROVIDER == "gemini":
