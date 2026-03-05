@@ -6,28 +6,21 @@ LangChain + LangGraph를 활용한 Adaptive RAG 기반 PDF 문서 참조 챗봇
 
 ## 시스템 아키텍처
 
-```
-사용자 질문
-     │
-     ▼
-[Retrieve] Ensemble 검색 (BM25 + Vector MMR)
-     │
-     ▼
-[Grade] 문서 관련성 평가
-     │
-     ├─ 관련 있음 ──────────────────────────┐
-     │                                       │
-     └─ 관련 없음 + 재시도 가능              │
-          │                                  │
-          ▼                                  │
-     [Rewrite] 쿼리 최적화 → 재검색          │
-                                             ▼
-                                       [Generate]
-                                   LLM으로 답변 생성
-                                   (출처 + 근거 포함)
-                                             │
-                                             ▼
-                                        최종 답변
+```mermaid
+flowchart TD
+    A([사용자 질문]) --> B
+
+    subgraph Graph["LangGraph - Adaptive RAG"]
+        B["🔍 Retrieve\nEnsemble 검색\nBM25 + Vector MMR"]
+        B --> C["⚖️ Grade\n문서 관련성 평가"]
+        C -->|관련 있음| D["✍️ Generate\nClaude Sonnet 4.6\n답변 생성 + 출처 인용"]
+        C -->|관련 없음 + 재시도 가능| E["🔄 Rewrite\n쿼리 최적화"]
+        E --> B
+        C -->|재시도 초과| F["❌ 답변 불가\n관련 문서 없음 안내"]
+    end
+
+    D --> G([최종 답변])
+    F --> G
 ```
 
 ---
