@@ -8,19 +8,47 @@ LangChain + LangGraph를 활용한 Adaptive RAG 기반 PDF 문서 참조 챗봇
 
 ```mermaid
 flowchart TD
-    A([사용자 질문]) --> B
+    USER(["👤 사용자 질문"])
 
-    subgraph Graph["LangGraph - Adaptive RAG"]
-        B["Retrieve\nEnsemble 검색\nBM25 + Vector MMR"]
-        B --> C["Grade\n문서 관련성 평가"]
-        C -->|관련 있음| D["Generate\nClaude Sonnet 4.6\n답변 생성 + 출처 인용"]
-        C -->|관련 없음 + 재시도 가능| E["Rewrite\n쿼리 최적화"]
-        E --> B
-        C -->|재시도 초과| F["답변 불가\n관련 문서 없음 안내"]
+    subgraph ENSEMBLE["  Ensemble Retriever  "]
+        direction LR
+        BM25["🔑 BM25\n키워드 검색\n가중치 0.4"]
+        VEC["🧠 Vector MMR\n의미 기반 검색\n가중치 0.6"]
+        MERGE(["⚡ Ensemble\n결과 통합"])
+        BM25 --> MERGE
+        VEC --> MERGE
     end
 
-    D --> G([최종 답변])
-    F --> G
+    GRADE["⚖️ Grade\n문서 관련성 평가"]
+    REWRITE["✏️ Rewrite\n쿼리 재작성"]
+    GEN["🤖 Generate\nClaude Sonnet 4.6\n출처 + 근거 포함"]
+    FAIL["⚠️ 답변 불가\n관련 문서 없음"]
+    ANS(["💬 최종 답변"])
+
+    USER --> BM25
+    USER --> VEC
+    MERGE --> GRADE
+    GRADE -- "✅ 관련 있음" --> GEN
+    GRADE -- "❌ 관련 없음" --> REWRITE
+    REWRITE -- "재검색" --> BM25
+    REWRITE -- "재검색" --> VEC
+    GRADE -- "🔁 재시도 초과" --> FAIL
+    GEN --> ANS
+    FAIL --> ANS
+
+    classDef retrieverNode fill:#dbeafe,stroke:#2563eb,color:#1e3a5f
+    classDef gradeNode fill:#fef9c3,stroke:#ca8a04,color:#78350f
+    classDef genNode fill:#dcfce7,stroke:#16a34a,color:#14532d
+    classDef rewriteNode fill:#ede9fe,stroke:#7c3aed,color:#3b0764
+    classDef failNode fill:#fee2e2,stroke:#dc2626,color:#7f1d1d
+    classDef termNode fill:#f1f5f9,stroke:#64748b,color:#0f172a
+
+    class BM25,VEC,MERGE retrieverNode
+    class GRADE gradeNode
+    class GEN genNode
+    class REWRITE rewriteNode
+    class FAIL failNode
+    class USER,ANS termNode
 ```
 
 ---
