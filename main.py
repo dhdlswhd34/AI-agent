@@ -1,8 +1,13 @@
 import os
+import sys
 import argparse
 import shutil
 from dotenv import load_dotenv
 from langchain_core.messages import HumanMessage, AIMessage
+
+# 터미널 한글 입력 시 surrogate 문자 방지
+if hasattr(sys.stdin, "reconfigure"):
+    sys.stdin.reconfigure(encoding="utf-8")
 
 load_dotenv()
 
