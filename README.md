@@ -10,45 +10,32 @@ LangChain + LangGraph를 활용한 Adaptive RAG 기반 PDF 문서 참조 챗봇
 flowchart TD
     USER(["👤 사용자 질문"])
 
-    subgraph ENSEMBLE["  Ensemble Retriever  "]
+    subgraph RETRIEVE["Step 1 · Retrieve"]
         direction LR
-        BM25["🔑 BM25\n키워드 검색\n가중치 0.4"]
-        VEC["🧠 Vector MMR\n의미 기반 검색\n가중치 0.6"]
-        MERGE(["⚡ Ensemble\n결과 통합"])
+        BM25["BM25\n키워드 검색 · 0.4"]
+        VEC["Vector MMR\n의미 기반 검색 · 0.6"]
+        MERGE(["Ensemble\n결과 통합"])
         BM25 --> MERGE
         VEC --> MERGE
     end
 
-    GRADE["⚖️ Grade\n문서 관련성 평가"]
-    REWRITE["✏️ Rewrite\n쿼리 재작성"]
-    GEN["🤖 Generate\nClaude Sonnet 4.6\n출처 + 근거 포함"]
-    FAIL["⚠️ 답변 불가\n관련 문서 없음"]
+    GRADE["Step 2 · Grade\n문서 관련성 평가"]
+
+    REWRITE["Step 3a · Rewrite\n쿼리 재작성 후 재검색"]
+
+    GEN["Step 3b · Generate\nClaude Sonnet 4.6\n출처 + 근거 포함 답변 생성"]
+
+    FAIL(["답변 불가\n관련 문서 없음"])
     ANS(["💬 최종 답변"])
 
-    USER --> BM25
-    USER --> VEC
+    USER --> RETRIEVE
     MERGE --> GRADE
-    GRADE -- "✅ 관련 있음" --> GEN
-    GRADE -- "❌ 관련 없음" --> REWRITE
-    REWRITE -- "재검색" --> BM25
-    REWRITE -- "재검색" --> VEC
-    GRADE -- "🔁 재시도 초과" --> FAIL
+    GRADE -- "관련 있음" --> GEN
+    GRADE -- "관련 없음" --> REWRITE
+    REWRITE -. "재검색" .-> RETRIEVE
+    GRADE -- "재시도 초과" --> FAIL
     GEN --> ANS
     FAIL --> ANS
-
-    classDef retrieverNode fill:#dbeafe,stroke:#2563eb,color:#1e3a5f
-    classDef gradeNode fill:#fef9c3,stroke:#ca8a04,color:#78350f
-    classDef genNode fill:#dcfce7,stroke:#16a34a,color:#14532d
-    classDef rewriteNode fill:#ede9fe,stroke:#7c3aed,color:#3b0764
-    classDef failNode fill:#fee2e2,stroke:#dc2626,color:#7f1d1d
-    classDef termNode fill:#f1f5f9,stroke:#64748b,color:#0f172a
-
-    class BM25,VEC,MERGE retrieverNode
-    class GRADE gradeNode
-    class GEN genNode
-    class REWRITE rewriteNode
-    class FAIL failNode
-    class USER,ANS termNode
 ```
 
 ---
@@ -120,15 +107,21 @@ flowchart TD
 
 **왜 단일 검색 방식이 아닌 Ensemble인가?**
 
-```
-BM25 (키워드 기반)       Vector MMR (의미 기반)
-       +                       +
-  전문 용어·고유명사       문맥·유사 표현 검색
-  정확한 매칭에 강함       의미 이해에 강함
-       │                       │
-       └──────── Ensemble ──────┘
-                    │
-              Recall 극대화
+```mermaid
+flowchart LR
+    Q(["질문"]) --> BM25 & VEC
+
+    subgraph BM25_BOX["BM25 · 가중치 0.4"]
+        BM25["키워드 기반 검색\n전문 용어 · 고유명사\n정확한 매칭에 강함"]
+    end
+
+    subgraph VEC_BOX["Vector MMR · 가중치 0.6"]
+        VEC["의미 기반 검색\n문맥 · 유사 표현\n중복 청크 제거"]
+    end
+
+    BM25 --> ENS
+    VEC --> ENS
+    ENS(["Ensemble\nRecall 극대화"])
 ```
 
 | 구성 요소 | 가중치 | 역할 |
