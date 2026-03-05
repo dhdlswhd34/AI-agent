@@ -5,10 +5,6 @@ import shutil
 from dotenv import load_dotenv
 from langchain_core.messages import HumanMessage, AIMessage
 
-# 터미널 한글 입력 시 surrogate 문자 방지
-if hasattr(sys.stdin, "reconfigure"):
-    sys.stdin.reconfigure(encoding="utf-8")
-
 load_dotenv()
 
 from src.document_loader import load_documents, split_documents
@@ -59,6 +55,18 @@ def print_banner():
     print(f"  LangChain + LangGraph + {model_label}")
     print("=" * 50)
 
+def safe_input(prompt: str) -> str:
+    """인코딩 문제 없이 터미널 입력을 읽습니다 (UTF-8 / CP949 대응)."""
+    print(prompt, end="", flush=True)
+    raw = sys.stdin.buffer.readline()
+    if not raw:
+        raise EOFError
+    try:
+        return raw.decode("utf-8").strip()
+    except UnicodeDecodeError:
+        return raw.decode("cp949", errors="replace").strip()
+
+
 def run_chatbot(agent, chat_history: list):
     """CLI 챗봇 루프"""
     print("\n준비 완료! 질문을 입력하세요.")
@@ -67,7 +75,7 @@ def run_chatbot(agent, chat_history: list):
 
     while True:
         try:
-            user_input = input("\n질문: ").strip()
+            user_input = safe_input("\n질문: ")
         except (EOFError, KeyboardInterrupt):
             print("\n\n종료합니다.")
             break
