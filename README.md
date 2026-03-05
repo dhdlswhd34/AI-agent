@@ -40,16 +40,12 @@ LangChain + LangGraph를 활용한 Adaptive RAG 기반 PDF 문서 참조 챗봇
 |------|------|
 | **생태계** | LangChain, LangGraph의 공식 지원 언어로 가장 풍부한 통합 제공 |
 | **AI/ML 표준** | Hugging Face, PyTorch 등 AI 생태계의 사실상 표준 언어 |
-| **문서 처리** | pdfplumber 등 PDF 처리 라이브러리가 가장 성숙 |
+| **문서 처리** | docling 등 고급 문서 처리 라이브러리와의 연동이 용이 |
 | **개발 속도** | 빠른 프로토타이핑과 간결한 코드로 RAG 파이프라인 구현에 최적 |
 
 ---
 
-### LLM: Claude Sonnet 4.6 (Anthropic) / Gemini 2.5 Flash (Google)
-
-기본값은 Claude Sonnet 4.6이며, `.env`의 `LLM_PROVIDER` 설정으로 Gemini 2.5 Flash로 전환 가능합니다.
-
-#### Claude Sonnet 4.6
+### LLM: Claude Sonnet 4.6 (Anthropic)
 
 | 항목 | 내용 |
 |------|------|
@@ -57,16 +53,6 @@ LangChain + LangGraph를 활용한 Adaptive RAG 기반 PDF 문서 참조 챗봇
 | **문서 이해력** | 복잡한 PDF 구조와 전문 용어 해석 능력이 타 모델 대비 우수 |
 | **Hallucination 억제** | 문서 기반 답변 시 근거 없는 정보 생성 억제 능력이 뛰어남 |
 | **한국어 지원** | 한국어 문서 처리 및 답변 생성의 품질이 높음 |
-
-#### Gemini 2.5 Flash
-
-| 항목 | 내용 |
-|------|------|
-| **속도** | 응답 속도가 빠르고 비용 효율적 |
-| **멀티모달** | 이미지·표 포함 PDF 처리에 유리 |
-| **무료 티어** | Google AI Studio 무료 할당량 제공 |
-
-> Claude는 문서 이해·한국어 처리 품질, Gemini는 속도·비용 효율 면에서 각각 강점
 
 ---
 
@@ -96,15 +82,16 @@ LangChain + LangGraph를 활용한 Adaptive RAG 기반 PDF 문서 참조 챗봇
 
 ---
 
-### PDF 로더: PDFPlumberLoader
+### 문서 파싱: docling
 
 | 항목 | 내용 |
 |------|------|
-| **표(Table) 추출** | 셀 구조를 유지하며 정확하게 추출 |
-| **레이아웃 보존** | 다단 구성, 헤더/푸터 처리가 PyPDFLoader 대비 우수 |
-| **특수문자** | 수식·특수 폰트 깨짐 최소화 |
+| **구조 인식** | 표·그림·제목·본문 등 문서 구조를 의미 단위로 정확하게 파싱 |
+| **Markdown 변환** | 파싱 결과를 Markdown으로 출력 → 청킹 시 문맥 보존에 유리 |
+| **복잡한 레이아웃** | 다단 구성, 헤더/푸터, 혼합 레이아웃 처리에 강함 |
+| **다양한 포맷** | PDF 외에도 DOCX, PPTX, HTML 등 다양한 문서 포맷 지원 |
 
-> PyPDFLoader는 표·복잡한 레이아웃에서 텍스트가 뒤섞이는 문제가 있어 PDFPlumberLoader로 교체
+> 단순 텍스트 추출에 그치는 PyPDFLoader·PDFPlumberLoader와 달리, 문서의 논리적 구조를 보존하여 RAG 품질 향상
 
 ---
 
@@ -184,7 +171,7 @@ BM25 (키워드 기반)       Vector MMR (의미 기반)
 ├── src/
 │   ├── __init__.py
 │   ├── config.py          # 설정값 관리
-│   ├── document_loader.py # PDF 로드 + 청킹
+│   ├── document_loader.py # 문서 로드 + 청킹 (docling)
 │   ├── vectorstore.py     # ChromaDB 초기화/로드
 │   ├── retriever.py       # Ensemble Retriever 생성
 │   ├── prompts.py         # 프롬프트 템플릿 정의
@@ -206,20 +193,13 @@ BM25 (키워드 기반)       Vector MMR (의미 기반)
 cp .env.example .env
 ```
 
-`.env` 파일을 열어 API 키와 LLM 프로바이더를 입력합니다:
+`.env` 파일을 열어 Anthropic API 키를 입력합니다:
 
 ```
-# Claude 사용 시
-LLM_PROVIDER=claude
 ANTHROPIC_API_KEY=your_anthropic_api_key_here
-
-# Gemini 사용 시
-LLM_PROVIDER=gemini
-GOOGLE_API_KEY=your_google_api_key_here
 ```
 
 > Anthropic API 키: https://console.anthropic.com
-> Google API 키: https://aistudio.google.com
 
 ### 2. PDF 문서 준비
 
@@ -287,9 +267,9 @@ docker-compose run --rm rag-agent python main.py --rebuild
 | 구분 | 선택 | 이유 요약 |
 |------|------|-----------|
 | 언어 | Python 3.11 | LangChain/LangGraph 공식 지원, AI 생태계 표준 |
-| LLM | Claude Sonnet 4.6 / Gemini 2.5 Flash | 문서 이해력·한국어 품질 / 속도·비용 효율 |
+| LLM | Claude Sonnet 4.6 | 문서 이해력·한국어 품질·200K 컨텍스트 |
 | VectorDB | ChromaDB | 로컬, 영구 저장, LangChain 통합 안정적 |
 | 임베딩 | BAAI/bge-m3 | 다국어(한국어) 특화, 무료, 고성능 |
-| PDF 로더 | PDFPlumberLoader | 표·레이아웃 정확 추출 |
+| 문서 파싱 | docling | 구조 인식·Markdown 변환으로 RAG 품질 향상 |
 | Retriever | Ensemble (BM25+Vector) + MMR | 키워드+의미 결합으로 Recall 극대화 |
 | 프레임워크 | LangChain + LangGraph | RAG 파이프라인 + 조건부 에이전트 흐름 |
